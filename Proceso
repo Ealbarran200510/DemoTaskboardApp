@@ -1,0 +1,218 @@
+Este archivo de texto contiene los pasos para la creación de DemoTaskboardApp de principio a fin.
+
+1. Creación del proyecto mediante Spring Initializer.
+Project: Maven
+Language: Java
+Java 11
+Dependencies: Lombok, Spring Web, Spring Data JPA, H2 Database.
+
+2. Agregar las dependencias Swagger y Swagger UI en el archivo pom.xml
+3. Creación de estructura de paquetes.
+Context -> Almacena clases de configuración.
+Controller -> Almacena los elementos de la API REST.
+Exceptions
+Mapper -> Contiene mapper genérico que se utilizará en toda la aplicación.
+Persistence -> Almacena elementos de persistencia (entidades y repositorios).
+  Entity
+  Repository
+Service -> Contiene las clases que implementan la lógica de negocio.
+Util -> Almacena clases utilitarias
+
+4. Creación de la clase SwaggerConfig en el paquete Context.
+La clase contiene la anotación @Configuration, @EnableSwagger 2 para habilitar Swagger y @Bin para crear el bin principal con la información asociada a la API
+
+5. Modificacion del archivo application properties a application.ym, esto es personal, solo para manejar una estructura más sencilla.
+Application.yml contiene los datos de la conexion con la DB, así como algunas configuraciones de la misma.
+
+6. Creación de la clase TaskController en el paquete Controller.
+TaskController contiene la anotación @RestController, esto le indica a Spring que debe reconocer su contenido como un controlador.
+
+7. Se inicia la aplicación para comprobar que Swagger está funcionando, para ello se accede a localhost:(puerto)/swagger-ui.html.
+
+8. Analizando la lógica de negocio se comienzan a crear clases desde la capa más inferior: Persistencia -> Servicios -> Controladores
+
+9. Creación de la clase Task en el paquete Entity.
+Task contiene todos los atributos de una tarea, además de las anotaciones @Data para obtener getters y setters utilizando Lombok, @Entity, @Table que indica que la entidad se convertirá en una tabla dentro de la DB, @Id y @GeneratedValue para generar de manera automática y autoincremental el valor de ID para cada nueva tarea.
+
+10. Creación de la clase TaskStatus en el paquete Entity.
+TaskStatus es un enum que contiene dos posibles valores, ON_TIME para marcar que la tarea está en progreso y LATE para marcar una tarea como retrasada.
+TaskStatus es un atributo de la entidad Task, se debe crear el enum con los posibles valores para este atributo ya que por sí solo no se reconoce como un valor de la entidad.
+
+11. Creación de la interfaz TaskRepository en el paquete Repository.
+Los Repositorios permiten acceder a los datos alojados en la DB.
+TaskRepository extiende de la entidad JPA y recibe dos parámetros: el tipo de entidad para la cual persistirá valores (Task) y el tipo de dato identificador que deberá coincidir con el tipo de dato marcado con la anotación @Id en la entidad (Long).
+
+12. Creación de la clase TaskService en el paquete Service.
+TaskService contiene la anotación @Service, con ello se crea un bin que se insertará donde sea necesario, también contiene la lógica necesaria para ejecutar las funcionalidades que deberá realizar la aplicación.
+
+13. Conexión del Repositorio en la clase TaskService.
+Se inserta TaskRepository dentro del servicio a través de inyección de dependencias.
+La inyección de dependencias permite insertar un objeto de una clase en otro.
+Los servicios se deben conectar a los Repositorios, y los Repositorios a la base de datos.
+
+14. Añadir inyección de dependencias basada en constructor.
+Es posible inyectar dependencias con la anotación @Autowired, con el uso de un método o con el uso de un constructor.
+
+15. Creando el método createTask en el Servicio.
+createTask implementa la funcionalidad de crear una tarea, según la lógica de la funcionalidad, un usuario debería proporcionar un título, una descripción de la tarea y probablemente la fecha estimada de finalización.
+La entidad Task, además de los atributos anteriores, contiene otros como fecha de creación, un boolean que determina si la tarea está finalizada y un estátus de la tarea. 
+No es necesario que el usuario proporcione la fecha de creación, además se sobrentieende que si está creando una tarea, entonces la tarea no está finalizada y por lógica su estátus debe ser ON_TIME.
+
+16. Creación del paquete DTO dentro del paquete Service.
+Un Objeto de transferencia de datos DTO permite mover datos de la entidad entre diferentes capas de la aplicación.
+El DTO define qué datos de entrada se solicitarán al usuario.
+
+17. Creación de TaskInDTO dentro del paquete DTO.
+El DTO contiene los datos que ingresará el usuario al crear una tarea (título, descripción y fecha estimada de finalización).
+
+18. Creación de la función save dentro del método createTask.
+Save permite crear o guardar una entidad del mismo tipo del repositorio, debe recibir una entidad con todos los atributos de Task para poder guardarlos en la DB, no solo los que ingresará el usuario.
+
+19. Creacion del paquete Mapper.
+Un Mapper permite convertir un objeto en otro o mapearlo.
+
+20. Creación de IMapper dentro del paquete Mapper.
+IMapper es una interfaz genérica para todos los mapper de la aplicación, recibe un dato de entrada I, y un dato de salida O.
+
+21. Creación de la clase TaskInDTOToTask.
+TaskInDTOToTask implementa el mapper genérico que hemos creado, el origen es el objeto simplificado (TaskInDTO) y la salida es el objeto original (Task).
+TaskInDTOToTask convierte el objeto simplificado al objeto completo Task que sí podremos guardar en la DB, incluye la anotación @Component para poder inyectarlo en alguna otra clase.
+
+22. Implementación del método Map dentro de la clase TaskInDTOToTask.
+Map debe devolver todos los atributos que tendrá el nuevo objeto:
+
+Los ingresados por el usuario:
+Título de la tarea (insertado en map con task.set(atributo)(in.get(atributo)).
+Descripción de la tarea. (mismo formato).
+Fecha estimada de finalización. (mismo formato).
+
+Y los que se deben obtener automáticamente:
+Fecha de creación de la tarea (insertado en map con task.set(atributo)(LocalDateTime.now).
+Boolean, tarea no finalizada por defecto (insertado en map con task.set(atributo)(false)).
+Estátus de la tarea, ON_TIME por defecto (insertado en map con task.set(atributo)((atributo).ON_TIME).
+
+23. Inyección la clase TaskInDTOToTask en el Servicio.
+Ahora el método save devolverá la nueva entidad que TaskInDTOToTask ha creado.
+
+24. Creación la clase TaskController.
+La capa de Controlador solo debe comunicarse con la capa de Servicio.
+
+25. Agregar el constructor para TaskController.
+
+26. Creación del elemento createTask en el Controlador.
+createTask contiene la anotación @PostMapping que permite crear elementos, recibe el objeto simplificado que hemos creado (TaskInDTO) con la anotación @RequestBody.
+Contiene además la anotació @RequestMapping para definir la ruta que debe seguir el controlador con ("/{nombre en plural}").
+
+27. Iniciar el proyecto y comprobar errores.
+
+28. Prueba de la funcionalidad usando Swagger UI.
+La prueba debe devolver un JSON con todos los atributos de la entidad Task, y un estátus 200.
+
+29. Comprobación los elementos creados usando la consola H2
+La dirección localhost:(puerto)/h2-console permite acceder a la consola H2 y una vez conectado con la URL, usuario y contraseña definidos en apllication.yml podemos comprobar los campos que deben haberse creado.
+
+30. Creación la funcionalidad para obtener todas las tareas.
+JPA Repository ya incluye el método findAll que permite obtener todos los elementos de la base de datos, por lo que no es necesario implementar la funcionalidad en la capa de persistencia (Entity y Repository).
+
+31. Implementación de la funcionalidad en la clase TaskService.
+El método List implementa la funcionalidad findAll.
+
+32. Implementación de la funcionalidad en la clase TaskController.
+El método List incluye la anotación @GetMapping, permite obtener elementos desde API.
+
+33. Iniciar el proyecto y comprobar errores.
+
+34. Prueba de la funcionalidad usando Swagger UI.
+Swagger UI ahora debe incluir el método GET al recargar la página, este debe devolver un JSON con los atributos de todas las tareas creadas, y un estátus 200.
+
+35. Creación de la funcionalidad para obtener tareas filtrando por estátus.
+
+36. Implementación de la funcionalidad en el Repositorio.
+El método List implementa la funcionalidad findAllByTaskStatus, que recibe el enum que definimos como atributo de la entidad (TaskStatus).
+
+37. Implementación de la funcionalidad en la clase TaskService.
+El método List implementa la funcionalidad findAllByTaskStatus.
+
+38. Implementación de la funcionalidad en la clase TaskController.
+El método List incluye la anotación @GetMapping, esta no puede ser igual a la anterior por lo que debe agregarse una ruta específica para esta funcionalidad.
+La ruta que debe seguir el controlador es ("/{nombre en plural}/{valor a capturar(status)}").
+El método List implementa la funcionalidad findAllByTaskStatus, esta recibe la variable que se ha de capturar en la ruta definida previamente con la anotación @PathVariable,
+además del tipo de variable (TaskStatus). Con esto se define la variable que debe ingresar el usuario para realizar la búsqueda, cuyo tipo deberá ser obligatoriamente el que hemos definido (tipo TaskStatus).
+
+39. Iniciar el proyecto y comprobar errores.
+
+40. Prueba de la funcionalidad usando Swagger UI.
+Swagger UI ahora debe incluir otro método GET especificando findAllByStatus al recargar la página, Spring debe reconocer los posibles valores del estátus de la tarea, y solo debe permitir seleccionar 
+alguno de los dos, este debe devolver un JSON vacío al seleccionar el valor LATE, ya que todas las tareas creadas tienen un estátus ON_TIME por defecto, y un estátus 200.
+
+41. Creación de la funcionalidad para marcar tareas como finalizadas.
+Esto requiere crear una consulta nativa para realizar un UPDATE en la DB.
+
+42. Creación de la consulta nativa markTaskAsFinished en la clase TaskRepository.
+La anotación @Query recibe el valor de la consulta que se quiere ejecutar, y un segundo parámetro que marca la consulta nativa como true.
+markTaskAsFinished recibe como parámetro el ID de la tarea a actualizar como terminada, con la anotación @Param.
+
+43. Iniciar el proyecto y comprobar errores.
+
+44. Comprobar elementos creados usando la consola H2.
+
+45. Realizar un UPDATE del estátus usando la consola H2.
+(UPDATE TASK SET FINISHED=true WHERE ID=1;)
+
+46. Comprobar que la consulta funciona usando la consola H2.
+El elemento con el ID seleccionado mostrará su estátus modificado a true.
+
+47. Ingresar la instrucción de la consulta como parámetro a la anotación @Query.
+Además la anotación @Modifying marcará la consulta como una query de actualización.
+
+48. Implementación de la funcionalidad en la clase TaskService.
+El elemento incluye la anotación @Transactional, que indica que la actualización se debe ejecutar de principio a fin, de lo contrario se debe revertir.
+
+49. Implementación de la funcionalidad en la clase TaskController.
+La anotación @PatchMapping indica el uso de un método HTTP para actualizar datos, igualmente necesita especificar la ruta y el valor que debe recibir del usuario (Id).
+El método ResponseEntity recibe un elemento como variable (Id) utilizando nuevamente la anotación @PathVariable.
+Además utiliza noContent y build para devolver un estátus HTTP, con el fin de que al realizar una actualización el usuario reciba una respuesta de confirmación.
+
+50. Iniciar el proyecto y comprobar errores.
+
+51. Prueba de la funcionalidad usando Swagger UI.
+Swagger UI ahora debe incluir el método PATCH al recargar la página, Spring debe reconocer el valor a ingresar que corresponde a la tarea que se quiere modificar,
+este debe devolver un estátus 204 al ingresar el ID de una tarea creada.
+
+52. Comprobación de la actualización de estado utilizando el método GET.
+Al consultar todos los elementos de la DB, el elemento que hemos modificado deberá mostrar su estátus a true.
+
+53. Creación de la clase ToDoExceptions en el paquete Exceptions.
+La clase ToDoExceptions extiende de la clase RuntimeExceptions de Java, además contiene dos atributos: un mensaje a lanzar y un estátus HTTP.
+Es necesario sobreescribir el método con la anotación @Override a fin de poder usarlo en clases superiores.
+
+54. Agregar la excepción a la clase TaskService.
+El método Optional maneja la condición a evaluar, si el optionalTask está vacío se lanzará la excepción con el mensaje y el estátus HTTP.
+
+55. Creación de la clase ExceptionHandler en el paquete Exception.
+ExceptionHandler permite manejar el resto de excepciones que no hemos especificado en la aplicación.
+HttpHeaders maneja las excepciones que lanza la aplicación y permite que se visualice correctamente renderizándola.
+
+56. Iniciar el proyecto y comprobar errores.
+
+57. Comprobar la excepción utilizando Swagger UI.
+Al utilizar el método PATCH ingresando un ID de una tarea que no existe, la respuesta deberá contener el mensaje de error, y un estátus 404.
+
+58. Creación la funcionalidad para eliminar tareas.
+Al igual que en la funcionalidad para obtener todas las tareas, JPA Repository ya incluye el método deleteById que permite eliminar un elemento de la base de datos
+utilizando un identificador, por lo que no es necesario implementar la funcionalidad en la capa de persistencia (Entity y Repository).
+
+59. Implementación de la funcionalidad en la clase TaskService.
+El elemento deleteById incluye el manejo de la excepción, al igual que en updateTaskAsFinished, si el ID del elemento a eliminar no existe se lanza la excepción.
+
+60. Implementación de la funcionalidad en la clase TaskController.
+La anotación @DeleteMapping, al igual que @PatchMapping, recibe con ResponseEntity el ID del elemento a eliminar, también noContent y build para devolver un estátus HTTP.
+
+61. Iniciar el proyecto y comprobar errores.
+
+62. Prueba de la funcionalidad usando Swagger UI.
+Swagger UI ahora debe incluir el método DELETE al recargar la página, igualmente Spring debe reconocer el valor a ingresar, debe devolver un estátus 404 al ingresar el ID de una tarea que no existe,
+y debe devolver un estátus 204 al ingresar el ID de una tarea previamente creada.
+
+63. Prueba de funcionalidades.
+Utilizando Swagger UI y H2 console es posible comprobar cada una de las funcionalidades creadas para la aplicación.
