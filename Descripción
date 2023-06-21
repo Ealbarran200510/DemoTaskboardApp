@@ -1,0 +1,9 @@
+El siguiente repositorio contiene un proyecto sencillo de una aplicación con fines demostrativos.
+
+La aplicación consiste en un tablero para la gestión de tareas personales.
+Cada tarea contiene atributos como: id, título de la tarea, descripción de la tarea, fecha de creación, fecha estimada de finalización y estátus de la tarea.
+La aplicación es capaz de crear tareas, borrar tareas, marcar tareas como finalizadas, consultar todas las tareas y realizar consultas por estátus.
+
+La documentación del proyecto se realizó utilizando Swagger.
+
+El repositorio incluye una serie de pasos para la creación de la aplicación de principio a fin, incluidos en el archivo de texto "Proceso".
